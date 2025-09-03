@@ -101,17 +101,17 @@ const getImageUrl = (author, filename) => {
       </div>
 
       <!-- Books Grid -->
-      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         <div v-for="(book, index) in filteredBooks" :key="index" 
-             style="display: inline-block; width: 100px; border: 1px solid #ccc; border-radius: 8px; padding: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); vertical-align: top;">
+             style="display: inline-block; width: 90px; border: 1px solid #ccc; border-radius: 8px; padding: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); vertical-align: top;">
           <img
             v-if="book.isCoverImg"
             :src="getImageUrl(book.author, book.name)"
             alt="Book Cover"
-            style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;"
+            style="width: 75px; height: 95px; object-fit: cover; border-radius: 4px; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto;"
           />
-          <div style="font-size: 10px; font-weight: bold; line-height: 1.2; margin-bottom: 4px; width: 80px; overflow: hidden; text-overflow: ellipsis;">{{ book.name }}</div>
-          <div style="font-size: 10px; color: #666; line-height: 1.2; width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ book.author }}</div>
+          <div style="font-size: 9px; font-weight: bold; line-height: 1.2; margin-bottom: 3px; width: 75px; overflow: hidden; text-overflow: ellipsis;">{{ book.name }}</div>
+          <div style="font-size: 9px; color: #666; line-height: 1.2; width: 75px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ book.author }}</div>
         </div>
       </div>
     </div>
