@@ -68,10 +68,10 @@ const getImageUrl = (author, filename) => {
       <div style="margin-bottom: 20px;">
         <!-- Author Filter -->
         <div style="margin-bottom: 15px;">
-          <label style="font-weight: bold; margin-right: 10px;">Filter by Author:</label>
+          <label class="filter-label">Filter by Author:</label>
           <select 
             v-model="selectedAuthor" 
-            style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: white; min-width: 200px;">
+            class="filter-select">
             <option value="">All Authors ({{ books.length }} books)</option>
             <option v-for="author in authors" :key="author" :value="author">
               {{ author }} ({{ books.filter(b => b.author === author).length }} books)
@@ -81,10 +81,10 @@ const getImageUrl = (author, filename) => {
         
         <!-- Category Filter -->
         <div style="margin-bottom: 15px;">
-          <label style="font-weight: bold; margin-right: 10px;">Filter by Category:</label>
+          <label class="filter-label">Filter by Category:</label>
           <select 
             v-model="selectedCategory" 
-            style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: white; min-width: 200px;">
+            class="filter-select">
             <option value="">All Categories</option>
             <option v-for="category in categories" :key="category" :value="category">
               {{ category }} ({{ books.filter(b => b.category === category).length }} books)
@@ -93,7 +93,7 @@ const getImageUrl = (author, filename) => {
         </div>
         
         <!-- Results Info -->
-        <div v-if="selectedAuthor || selectedCategory" style="color: #666; font-size: 14px;">
+        <div v-if="selectedAuthor || selectedCategory" class="results-info">
           Showing {{ filteredBooks.length }} books
           <span v-if="selectedAuthor"> by {{ selectedAuthor }}</span>
           <span v-if="selectedCategory"> in {{ selectedCategory }}</span>
@@ -103,15 +103,15 @@ const getImageUrl = (author, filename) => {
       <!-- Books Grid -->
       <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         <div v-for="(book, index) in filteredBooks" :key="index" 
-             style="display: inline-block; width: 90px; border: 1px solid #ccc; border-radius: 8px; padding: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); vertical-align: top;">
+             class="book-card">
           <img
             v-if="book.isCoverImg"
             :src="getImageUrl(book.author, book.name)"
             alt="Book Cover"
-            style="width: 75px; height: 95px; object-fit: cover; border-radius: 4px; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto;"
+            class="book-image"
           />
-          <div style="font-size: 9px; font-weight: bold; line-height: 1.2; margin-bottom: 3px; width: 75px; overflow: hidden; text-overflow: ellipsis;">{{ book.name }}</div>
-          <div style="font-size: 9px; color: #666; line-height: 1.2; width: 75px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ book.author }}</div>
+          <div class="book-title">{{ book.name }}</div>
+          <div class="book-author">{{ book.author }}</div>
         </div>
       </div>
     </div>
@@ -121,6 +121,107 @@ const getImageUrl = (author, filename) => {
 <style>
 body {
   font-family: sans-serif;
+}
+
+/* Filter styles with dark mode support */
+.filter-label {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #333;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+  min-width: 200px;
+}
+
+.results-info {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Book card styles */
+.book-card {
+  display: inline-block;
+  width: 90px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  vertical-align: top;
+  background: white;
+}
+
+.book-image {
+  width: 75px;
+  height: 95px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.book-title {
+  font-size: 9px;
+  font-weight: bold;
+  line-height: 1.2;
+  margin-bottom: 3px;
+  width: 75px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
+}
+
+.book-author {
+  font-size: 9px;
+  color: #666;
+  line-height: 1.2;
+  width: 75px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .filter-label {
+    color: #e5e5e5;
+  }
+  
+  .filter-select {
+    background: #2a2a2a;
+    color: #e5e5e5;
+    border-color: #555;
+  }
+  
+  .filter-select option {
+    background: #2a2a2a;
+    color: #e5e5e5;
+  }
+  
+  .results-info {
+    color: #aaa;
+  }
+  
+  .book-card {
+    background: #1a1a1a;
+    border-color: #444;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  .book-title {
+    color: #e5e5e5;
+  }
+  
+  .book-author {
+    color: #aaa;
+  }
 }
 
 /* Custom styles for text truncation */
