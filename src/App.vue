@@ -9,6 +9,7 @@ const selectedAuthor = ref("");
 const selectedCategory = ref("");
 const selectedBook = ref(null);
 const showBookDetail = ref(false);
+const favorites = ref([]);
 
 onMounted(async () => {
   try {
@@ -20,6 +21,9 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  // Load favorites from localStorage
+  loadFavorites();
 
   // Handle browser back button
   window.addEventListener('popstate', handlePopState);
@@ -118,6 +122,52 @@ const downloadBook = (book) => {
   link.click();
   document.body.removeChild(link);
 };
+
+// Favorites management functions
+const getFavoriteKey = (book) => {
+  return `${book.author}|${book.name}`;
+};
+
+const loadFavorites = () => {
+  try {
+    const savedFavorites = localStorage.getItem('epub-favorites');
+    if (savedFavorites) {
+      favorites.value = JSON.parse(savedFavorites);
+    }
+  } catch (error) {
+    console.error('Error loading favorites:', error);
+    favorites.value = [];
+  }
+};
+
+const saveFavorites = () => {
+  try {
+    localStorage.setItem('epub-favorites', JSON.stringify(favorites.value));
+  } catch (error) {
+    console.error('Error saving favorites:', error);
+  }
+};
+
+const isFavorite = (book) => {
+  const key = getFavoriteKey(book);
+  return favorites.value.includes(key);
+};
+
+const toggleFavorite = (book) => {
+  const key = getFavoriteKey(book);
+  const index = favorites.value.indexOf(key);
+  
+  if (index > -1) {
+    // Remove from favorites
+    favorites.value.splice(index, 1);
+  } else {
+    // Add to favorites
+    favorites.value.push(key);
+  }
+  
+  // Save to localStorage
+  saveFavorites();
+};
 </script>
 
 <template>
@@ -168,13 +218,17 @@ const downloadBook = (book) => {
       <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         <div v-for="(book, index) in filteredBooks" :key="index" 
              class="book-card"
+             :class="{ 'book-card-favorite': isFavorite(book) }"
              @click="showBookDetails(book)">
-          <img
-            v-if="book.isCoverImg"
-            :src="getImageUrl(book.author, book.name)"
-            alt="Book Cover"
-            class="book-image"
-          />
+          <div class="book-image-container">
+            <img
+              v-if="book.isCoverImg"
+              :src="getImageUrl(book.author, book.name)"
+              alt="Book Cover"
+              class="book-image"
+            />
+            <div v-if="isFavorite(book)" class="favorite-indicator">💖</div>
+          </div>
           <div class="book-title">{{ book.name }}</div>
           <div class="book-author">{{ book.author }}</div>
         </div>
@@ -235,7 +289,13 @@ const downloadBook = (book) => {
               <div class="book-actions">
                 <button class="action-button primary">📖 Read Book</button>
                 <button class="action-button secondary" @click="downloadBook(selectedBook)">💾 Download</button>
-                <button class="action-button secondary">❤️ Add to Favorites</button>
+                <button 
+                  class="action-button secondary" 
+                  @click="toggleFavorite(selectedBook)"
+                  :class="{ 'favorite-active': isFavorite(selectedBook) }">
+                  {{ isFavorite(selectedBook) ? '💖' : '❤️' }} 
+                  {{ isFavorite(selectedBook) ? 'Remove from Favorites' : 'Add to Favorites' }}
+                </button>
               </div>
             </div>
           </div>
@@ -561,6 +621,17 @@ body {
 .action-button.secondary:hover {
   background: #e9ecef;
   transform: translateY(-1px);
+}
+
+.action-button.favorite-active {
+  background: #ffe6e6;
+  border-color: #ff6b6b;
+  color: #d63031;
+}
+
+.action-button.favorite-active:hover {
+  background: #ffd3d3;
+  border-color: #e55656;
 }
 
 /* Dark mode modal styles */
