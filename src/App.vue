@@ -8,6 +8,7 @@ const loading = ref(true);
 const error = ref(null);
 const selectedAuthor = ref("");
 const selectedCategory = ref("");
+const showFavoritesOnly = ref(false);
 const selectedBook = ref(null);
 const showBookDetail = ref(false);
 const favorites = ref([]);
@@ -81,7 +82,7 @@ const categories = computed(() => {
   return uniqueCategories.sort();
 });
 
-// Filter books by selected author and category
+// Filter books by selected author, category, and favorites
 const filteredBooks = computed(() => {
   let filtered = books.value;
   
@@ -93,8 +94,21 @@ const filteredBooks = computed(() => {
     filtered = filtered.filter(book => book.category === selectedCategory.value);
   }
   
+  if (showFavoritesOnly.value) {
+    filtered = filtered.filter(book => isFavorite(book));
+  }
+  
   return filtered;
 });
+// Get count of favorite books
+const favoriteCount = computed(() => {
+  return books.value.filter(book => isFavorite(book)).length;
+});
+
+// Toggle favorites filter
+const toggleFavoritesFilter = () => {
+  showFavoritesOnly.value = !showFavoritesOnly.value;
+};
 
 // helper function to build image URL from author + title
 const getImageUrl = (author, filename) => {
@@ -395,11 +409,24 @@ const scrollToTop = () => {
           </select>
         </div>
         
+        <!-- Favorites Filter -->
+        <div style="margin-bottom: 15px;">
+          <button 
+            @click="toggleFavoritesFilter"
+            class="favorites-filter-button"
+            :class="{ 'favorites-active': showFavoritesOnly }">
+            {{ showFavoritesOnly ? '💖' : '❤️' }} 
+            {{ showFavoritesOnly ? 'Show All Books' : 'Show Favorites Only' }}
+            <span v-if="favoriteCount > 0">({{ favoriteCount }})</span>
+          </button>
+        </div>
+        
         <!-- Results Info -->
-        <div v-if="selectedAuthor || selectedCategory" class="results-info">
+        <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly" class="results-info">
           Showing {{ filteredBooks.length }} books
           <span v-if="selectedAuthor"> by {{ selectedAuthor }}</span>
           <span v-if="selectedCategory"> in {{ selectedCategory }}</span>
+          <span v-if="showFavoritesOnly"> from favorites</span>
         </div>
       </div>
 
@@ -557,6 +584,44 @@ body {
   font-size: 14px;
 }
 
+/* Favorites filter button styles */
+.favorites-filter-button {
+  padding: 10px 16px;
+  border: 2px solid #ff6b6b;
+  border-radius: 8px;
+  background: white;
+  color: #d63031;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.favorites-filter-button:hover {
+  background: #ffe6e6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.favorites-filter-button.favorites-active {
+  background: #ff6b6b;
+  color: white;
+  border-color: #e55656;
+}
+
+.favorites-filter-button.favorites-active:hover {
+  background: #e55656;
+  box-shadow: 0 2px 8px rgba(229, 86, 86, 0.4);
+}
+
+.favorites-filter-button span {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
 /* Book card styles */
 .book-card {
   display: inline-block;
@@ -641,6 +706,26 @@ body {
   
   .book-author {
     color: #aaa;
+  }
+  
+  /* Dark mode favorites filter button */
+  .favorites-filter-button {
+    background: #2a2a2a;
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+  }
+  
+  .favorites-filter-button:hover {
+    background: #333;
+  }
+  
+  .favorites-filter-button.favorites-active {
+    background: #ff6b6b;
+    color: white;
+  }
+  
+  .favorites-filter-button.favorites-active:hover {
+    background: #e55656;
   }
 }
 
