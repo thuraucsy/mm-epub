@@ -12,7 +12,8 @@ const showBookDetail = ref(false);
 
 onMounted(async () => {
   try {
-    const res = await axios.get("https://tanintharyi.github.io/myanmar-epub/v1/summary.json");
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const res = await axios.get(`${baseUrl}/summary.json`);
     books.value = res.data.book;
   } catch (err) {
     error.value = "Failed to load books.";
@@ -69,9 +70,10 @@ const filteredBooks = computed(() => {
 
 // helper function to build image URL from author + title
 const getImageUrl = (author, filename) => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
   const encodedAuthor = encodeURIComponent(author);
   const encodedFilename = encodeURIComponent(filename);
-  const imgUrl = `https://tanintharyi.github.io/myanmar-epub/v1/author/${encodedAuthor}/${encodedFilename}.jpg`;
+  const imgUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.jpg`;
   console.log("imgUrl", imgUrl);
   return imgUrl;
 };
@@ -98,6 +100,23 @@ const closeBookDetail = () => {
   if (window.location.hash.startsWith('#book-')) {
     window.history.back();
   }
+};
+
+// Download book function
+const downloadBook = (book) => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const encodedAuthor = encodeURIComponent(book.author);
+  const encodedFilename = encodeURIComponent(book.name);
+  const downloadUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.epub`;
+  
+  // Create a temporary link element and trigger download
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = `${book.name}.epub`;
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 </script>
 
@@ -215,7 +234,7 @@ const closeBookDetail = () => {
               
               <div class="book-actions">
                 <button class="action-button primary">📖 Read Book</button>
-                <button class="action-button secondary">💾 Download</button>
+                <button class="action-button secondary" @click="downloadBook(selectedBook)">💾 Download</button>
                 <button class="action-button secondary">❤️ Add to Favorites</button>
               </div>
             </div>
