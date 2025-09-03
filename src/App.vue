@@ -34,16 +34,17 @@ const getImageUrl = (author, filename) => {
     <div v-if="loading">Loading books...</div>
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
 
-    <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div v-for="(book, index) in books" :key="index" class="border rounded p-2 shadow">
+    <div v-else style="display: flex; flex-wrap: wrap; gap: 10px;">
+      <div v-for="(book, index) in books" :key="index" 
+           style="display: inline-block; width: 100px; border: 1px solid #ccc; border-radius: 8px; padding: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); vertical-align: top;">
         <img
           v-if="book.isCoverImg"
           :src="getImageUrl(book.author, book.name)"
           alt="Book Cover"
-          class="w-full h-48 object-cover rounded"
+          style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; display: block;"
         />
-        <div class="mt-2 font-semibold">{{ book.title }}</div>
-        <div class="text-sm text-gray-600">{{ book.author }}</div>
+        <div style="font-size: 10px; font-weight: bold; line-height: 1.2; margin-bottom: 4px; width: 80px; overflow: hidden; text-overflow: ellipsis;">{{ book.name }}</div>
+        <div style="font-size: 10px; color: #666; line-height: 1.2; width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ book.author }}</div>
       </div>
     </div>
   </div>
@@ -52,5 +53,30 @@ const getImageUrl = (author, filename) => {
 <style>
 body {
   font-family: sans-serif;
+}
+
+/* Custom styles for text truncation */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ensure consistent card heights */
+.grid > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid > div img {
+  flex-shrink: 0;
 }
 </style>
