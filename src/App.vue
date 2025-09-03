@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import axios from "axios";
+import ePub from "epubjs";
 
 const books = ref([]);
 const loading = ref(true);
@@ -10,6 +11,10 @@ const selectedCategory = ref("");
 const selectedBook = ref(null);
 const showBookDetail = ref(false);
 const favorites = ref([]);
+const showEpubReader = ref(false);
+const currentBook = ref(null);
+const epubBook = ref(null);
+const rendition = ref(null);
 
 onMounted(async () => {
   try {
@@ -168,6 +173,99 @@ const toggleFavorite = (book) => {
   // Save to localStorage
   saveFavorites();
 };
+
+// EPUB Reader functions
+const openEpubReader = async (book) => {
+  try {
+    currentBook.value = book;
+    showEpubReader.value = true;
+    
+    // Close book detail modal
+    showBookDetail.value = false;
+    
+    // Get EPUB URL
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const encodedAuthor = encodeURIComponent(book.author);
+    const encodedFilename = encodeURIComponent(book.name);
+    const epubUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.epub`;
+    
+    // Wait for next tick to ensure DOM is updated
+    await nextTick();
+    
+    // Initialize EPUB.js
+    epubBook.value = ePub(epubUrl);
+    
+    // Render the book
+    const viewerElement = document.getElementById('epub-viewer');
+    if (viewerElement) {
+      rendition.value = epubBook.value.renderTo(viewerElement, {
+        width: '100%',
+        height: '100%',
+        spread: 'none'
+      });
+      
+      // Display the book
+      await rendition.value.display();
+      
+      // Add navigation event listeners
+      document.addEventListener('keydown', handleEpubNavigation);
+    }
+  } catch (error) {
+    console.error('Error opening EPUB:', error);
+    alert('Error loading book. Please try again.');
+    closeEpubReader();
+  }
+};
+
+const closeEpubReader = () => {
+  showEpubReader.value = false;
+  currentBook.value = null;
+  
+  // Clean up EPUB.js instances
+  if (rendition.value) {
+    rendition.value.destroy();
+    rendition.value = null;
+  }
+  
+  if (epubBook.value) {
+    epubBook.value.destroy();
+    epubBook.value = null;
+  }
+  
+  // Remove event listeners
+  document.removeEventListener('keydown', handleEpubNavigation);
+};
+
+const handleEpubNavigation = (event) => {
+  if (!rendition.value) return;
+  
+  switch (event.key) {
+    case 'ArrowLeft':
+      event.preventDefault();
+      rendition.value.prev();
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      rendition.value.next();
+      break;
+    case 'Escape':
+      event.preventDefault();
+      closeEpubReader();
+      break;
+  }
+};
+
+const goToPrevPage = () => {
+  if (rendition.value) {
+    rendition.value.prev();
+  }
+};
+
+const goToNextPage = () => {
+  if (rendition.value) {
+    rendition.value.next();
+  }
+};
 </script>
 
 <template>
@@ -287,7 +385,7 @@ const toggleFavorite = (book) => {
               </div>
               
               <div class="book-actions">
-                <button class="action-button primary">📖 Read Book</button>
+                <button class="action-button primary" @click="openEpubReader(selectedBook)">📖 Read Book</button>
                 <button class="action-button secondary" @click="downloadBook(selectedBook)">💾 Download</button>
                 <button 
                   class="action-button secondary" 
@@ -299,6 +397,34 @@ const toggleFavorite = (book) => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EPUB Reader Modal -->
+    <div v-if="showEpubReader" class="epub-reader-overlay">
+      <div class="epub-reader-container">
+        <!-- Reader Header -->
+        <div class="epub-reader-header">
+          <div class="epub-book-info">
+            <h3 v-if="currentBook">{{ currentBook.name }}</h3>
+            <p v-if="currentBook">by {{ currentBook.author }}</p>
+          </div>
+          <button class="epub-close-button" @click="closeEpubReader">&times;</button>
+        </div>
+        
+        <!-- Reader Content -->
+        <div class="epub-reader-content">
+          <div id="epub-viewer" class="epub-viewer"></div>
+        </div>
+        
+        <!-- Reader Controls -->
+        <div class="epub-reader-controls">
+          <button class="epub-nav-button" @click="goToPrevPage">← Previous</button>
+          <div class="epub-controls-info">
+            Use arrow keys to navigate • Press ESC to close
+          </div>
+          <button class="epub-nav-button" @click="goToNextPage">Next →</button>
         </div>
       </div>
     </div>
@@ -721,5 +847,210 @@ body {
 
 .grid > div img {
   flex-shrink: 0;
+}
+
+/* EPUB Reader Styles */
+.epub-reader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.epub-reader-container {
+  width: 95%;
+  height: 95%;
+  max-width: 1200px;
+  max-height: 900px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.epub-reader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.epub-book-info h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.epub-book-info p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.epub-close-button {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.epub-close-button:hover {
+  background-color: #e9ecef;
+}
+
+.epub-reader-content {
+  flex: 1;
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.epub-viewer {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+}
+
+.epub-reader-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.epub-nav-button {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.epub-nav-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.epub-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.epub-controls-info {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  flex: 1;
+  margin: 0 20px;
+}
+
+/* Dark mode EPUB reader styles */
+@media (prefers-color-scheme: dark) {
+  .epub-reader-container {
+    background: #1a1a1a;
+  }
+  
+  .epub-reader-header {
+    background: #2a2a2a;
+    border-bottom-color: #444;
+  }
+  
+  .epub-book-info h3 {
+    color: #e5e5e5;
+  }
+  
+  .epub-book-info p {
+    color: #aaa;
+  }
+  
+  .epub-close-button {
+    color: #aaa;
+  }
+  
+  .epub-close-button:hover {
+    background-color: #333;
+  }
+  
+  .epub-reader-controls {
+    background: #2a2a2a;
+    border-top-color: #444;
+  }
+  
+  .epub-controls-info {
+    color: #aaa;
+  }
+}
+
+/* Mobile responsive for EPUB reader */
+@media (max-width: 768px) {
+  .epub-reader-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  
+  .epub-reader-header {
+    border-radius: 0;
+    padding: 12px 16px;
+  }
+  
+  .epub-book-info h3 {
+    font-size: 16px;
+  }
+  
+  .epub-book-info p {
+    font-size: 12px;
+  }
+  
+  .epub-reader-content {
+    padding: 16px;
+  }
+  
+  .epub-reader-controls {
+    border-radius: 0;
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .epub-controls-info {
+    margin: 0;
+    order: -1;
+  }
+  
+  .epub-nav-button {
+    flex: 1;
+    max-width: 120px;
+  }
 }
 </style>
