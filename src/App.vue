@@ -108,7 +108,7 @@ const getImageUrl = (author, filename) => {
             v-if="book.isCoverImg"
             :src="getImageUrl(book.author, book.name)"
             alt="Book Cover"
-            style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; display: block;"
+            style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;"
           />
           <div style="font-size: 10px; font-weight: bold; line-height: 1.2; margin-bottom: 4px; width: 80px; overflow: hidden; text-overflow: ellipsis;">{{ book.name }}</div>
           <div style="font-size: 10px; color: #666; line-height: 1.2; width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ book.author }}</div>
