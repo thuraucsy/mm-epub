@@ -36,17 +36,32 @@ onMounted(async () => {
 
 // Handle browser back/forward navigation
 const handlePopState = (event) => {
-  if (event.state && event.state.bookDetail) {
+  if (event.state && event.state.epubReader) {
+    // If state indicates EPUB reader should be open
+    const book = books.value.find(b => b.name === event.state.bookName);
+    if (book && !showEpubReader.value) {
+      openEpubReader(book);
+    }
+  } else if (event.state && event.state.bookDetail) {
     // If state indicates book detail should be open
     const book = books.value.find(b => b.name === event.state.bookName);
     if (book) {
       selectedBook.value = book;
       showBookDetail.value = true;
     }
+    // Close EPUB reader if it's open
+    if (showEpubReader.value) {
+      closeEpubReader(true); // Skip history back to prevent circular calls
+    }
   } else {
-    // Close book detail if no state or state doesn't indicate book detail
-    showBookDetail.value = false;
-    selectedBook.value = null;
+    // Close both modals if no state or state doesn't indicate any modal
+    if (showEpubReader.value) {
+      closeEpubReader(true); // Skip history back to prevent circular calls
+    }
+    if (showBookDetail.value) {
+      showBookDetail.value = false;
+      selectedBook.value = null;
+    }
   }
 };
 
@@ -183,6 +198,13 @@ const openEpubReader = async (book) => {
     // Close book detail modal
     showBookDetail.value = false;
     
+    // Push EPUB reader state to browser history
+    window.history.pushState(
+      { epubReader: true, bookName: book.name },
+      `Reading: ${book.name} - Myanmar EPUB Book List`,
+      `#reading-${encodeURIComponent(book.name)}`
+    );
+    
     // Get EPUB URL
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const encodedAuthor = encodeURIComponent(book.author);
@@ -217,7 +239,7 @@ const openEpubReader = async (book) => {
   }
 };
 
-const closeEpubReader = () => {
+const closeEpubReader = (skipHistoryBack = false) => {
   showEpubReader.value = false;
   currentBook.value = null;
   
@@ -234,6 +256,11 @@ const closeEpubReader = () => {
   
   // Remove event listeners
   document.removeEventListener('keydown', handleEpubNavigation);
+  
+  // Go back in history if we're currently showing EPUB reader and not called from popstate
+  if (!skipHistoryBack && window.location.hash.startsWith('#reading-')) {
+    window.history.back();
+  }
 };
 
 const handleEpubNavigation = (event) => {
