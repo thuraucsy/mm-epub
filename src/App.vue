@@ -15,6 +15,7 @@ const showEpubReader = ref(false);
 const currentBook = ref(null);
 const epubBook = ref(null);
 const rendition = ref(null);
+const showBackToTop = ref(false);
 
 onMounted(async () => {
   try {
@@ -32,6 +33,9 @@ onMounted(async () => {
 
   // Handle browser back button
   window.addEventListener('popstate', handlePopState);
+  
+  // Handle scroll for back to top button
+  window.addEventListener('scroll', handleScroll);
 });
 
 // Handle browser back/forward navigation
@@ -293,6 +297,19 @@ const goToNextPage = () => {
     rendition.value.next();
   }
 };
+
+// Back to top functionality
+const handleScroll = () => {
+  // Show back to top button when user scrolls down more than 300px
+  showBackToTop.value = window.scrollY > 300;
+};
+
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+};
 </script>
 
 <template>
@@ -455,6 +472,15 @@ const goToNextPage = () => {
         </div>
       </div>
     </div>
+
+    <!-- Back to Top Button -->
+    <button 
+      v-if="showBackToTop" 
+      @click="scrollToTop" 
+      class="back-to-top-button"
+      aria-label="Back to top">
+      ↑
+    </button>
   </div>
 </template>
 
@@ -1078,6 +1104,62 @@ body {
   .epub-nav-button {
     flex: 1;
     max-width: 120px;
+  }
+}
+
+/* Back to Top Button Styles */
+.back-to-top-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-to-top-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.back-to-top-button:active {
+  transform: translateY(-1px);
+}
+
+/* Dark mode back to top button */
+@media (prefers-color-scheme: dark) {
+  .back-to-top-button {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  
+  .back-to-top-button:hover {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Mobile responsive for back to top button */
+@media (max-width: 768px) {
+  .back-to-top-button {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
   }
 }
 </style>
