@@ -130,21 +130,68 @@ const closeBookDetail = () => {
   }
 };
 
-// Download book function
-const downloadBook = (book) => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  const encodedAuthor = encodeURIComponent(book.author);
-  const encodedFilename = encodeURIComponent(book.name);
-  const downloadUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.epub`;
-  
-  // Create a temporary link element and trigger download
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.download = `${book.name}.epub`;
-  link.target = '_blank';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+// Download book function with secure mobile support
+const downloadBook = async (book) => {
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const encodedAuthor = encodeURIComponent(book.author);
+    const encodedFilename = encodeURIComponent(book.name);
+    const downloadUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.epub`;
+    
+    // Show loading state (you could add a loading indicator here)
+    console.log('Starting download for:', book.name);
+    
+    // Fetch the file as blob to avoid cross-origin issues
+    const response = await fetch(downloadUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/epub+zip, application/octet-stream, */*'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+    }
+    
+    // Get the file as blob
+    const blob = await response.blob();
+    
+    // Create object URL for the blob
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    // Create and trigger download
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `${book.name}.epub`;
+    link.style.display = 'none';
+    
+    // Add to DOM, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the blob URL after a short delay
+    setTimeout(() => {
+      window.URL.revokeObjectURL(blobUrl);
+    }, 1000);
+    
+    console.log('Download completed for:', book.name);
+    
+  } catch (error) {
+    console.error('Download error:', error);
+    
+    // Fallback to direct link method for older browsers or if fetch fails
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const encodedAuthor = encodeURIComponent(book.author);
+    const encodedFilename = encodeURIComponent(book.name);
+    const downloadUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.epub`;
+    
+    // Open in new tab as fallback
+    window.open(downloadUrl, '_blank');
+    
+    // Show user-friendly message
+    alert('Download started. If the file doesn\'t download automatically, please check your browser\'s download settings or try again.');
+  }
 };
 
 // Favorites management functions
