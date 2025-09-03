@@ -6,6 +6,7 @@ const books = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const selectedAuthor = ref("");
+const selectedCategory = ref("");
 
 onMounted(async () => {
   try {
@@ -24,12 +25,25 @@ const authors = computed(() => {
   return uniqueAuthors.sort();
 });
 
-// Filter books by selected author
+// Get unique categories for filter dropdown
+const categories = computed(() => {
+  const uniqueCategories = [...new Set(books.value.map(book => book.category).filter(Boolean))];
+  return uniqueCategories.sort();
+});
+
+// Filter books by selected author and category
 const filteredBooks = computed(() => {
-  if (!selectedAuthor.value) {
-    return books.value;
+  let filtered = books.value;
+  
+  if (selectedAuthor.value) {
+    filtered = filtered.filter(book => book.author === selectedAuthor.value);
   }
-  return books.value.filter(book => book.author === selectedAuthor.value);
+  
+  if (selectedCategory.value) {
+    filtered = filtered.filter(book => book.category === selectedCategory.value);
+  }
+  
+  return filtered;
 });
 
 // helper function to build image URL from author + title
@@ -50,20 +64,40 @@ const getImageUrl = (author, filename) => {
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
 
     <div v-else>
-      <!-- Author Filter -->
+      <!-- Filters -->
       <div style="margin-bottom: 20px;">
-        <label style="font-weight: bold; margin-right: 10px;">Filter by Author:</label>
-        <select 
-          v-model="selectedAuthor" 
-          style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: white; min-width: 200px;">
-          <option value="">All Authors ({{ books.length }} books)</option>
-          <option v-for="author in authors" :key="author" :value="author">
-            {{ author }} ({{ books.filter(b => b.author === author).length }} books)
-          </option>
-        </select>
-        <span v-if="selectedAuthor" style="margin-left: 10px; color: #666; font-size: 14px;">
+        <!-- Author Filter -->
+        <div style="margin-bottom: 15px;">
+          <label style="font-weight: bold; margin-right: 10px;">Filter by Author:</label>
+          <select 
+            v-model="selectedAuthor" 
+            style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: white; min-width: 200px;">
+            <option value="">All Authors ({{ books.length }} books)</option>
+            <option v-for="author in authors" :key="author" :value="author">
+              {{ author }} ({{ books.filter(b => b.author === author).length }} books)
+            </option>
+          </select>
+        </div>
+        
+        <!-- Category Filter -->
+        <div style="margin-bottom: 15px;">
+          <label style="font-weight: bold; margin-right: 10px;">Filter by Category:</label>
+          <select 
+            v-model="selectedCategory" 
+            style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; background: white; min-width: 200px;">
+            <option value="">All Categories</option>
+            <option v-for="category in categories" :key="category" :value="category">
+              {{ category }} ({{ books.filter(b => b.category === category).length }} books)
+            </option>
+          </select>
+        </div>
+        
+        <!-- Results Info -->
+        <div v-if="selectedAuthor || selectedCategory" style="color: #666; font-size: 14px;">
           Showing {{ filteredBooks.length }} books
-        </span>
+          <span v-if="selectedAuthor"> by {{ selectedAuthor }}</span>
+          <span v-if="selectedCategory"> in {{ selectedCategory }}</span>
+        </div>
       </div>
 
       <!-- Books Grid -->
