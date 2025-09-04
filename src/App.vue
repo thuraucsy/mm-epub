@@ -467,7 +467,7 @@ const scrollToTop = () => {
             </div>
             <div v-if="isFavorite(book)" class="favorite-indicator">💖</div>
           </div>
-          <div class="book-title">{{ filteredBooks.length - index }}. {{ book.name }}</div>
+          <div class="book-title">{{ books.length - books.findIndex(b => b === book) }}. {{ book.name }}</div>
           <div class="book-author">{{ book.author }}</div>
         </div>
       </div>
