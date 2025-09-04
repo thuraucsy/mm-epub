@@ -106,7 +106,10 @@ onMounted(async () => {
   try {
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const res = await axios.get(`${baseUrl}/summary.json`);
-    books.value = res.data.book;
+    // Remove books with size_in_bytes <= 1407 from the source data
+    books.value = res.data.book.filter(book => {
+      return !book.size_in_bytes || book.size_in_bytes > 1407;
+    });
   } catch (err) {
     error.value = "Failed to load books.";
   } finally {
