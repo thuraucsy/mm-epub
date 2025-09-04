@@ -9,6 +9,7 @@ const error = ref(null);
 const selectedAuthor = ref("");
 const selectedCategory = ref("");
 const showFavoritesOnly = ref(false);
+const searchQuery = ref("");
 const selectedBook = ref(null);
 const showBookDetail = ref(false);
 const favorites = ref([]);
@@ -169,9 +170,17 @@ const categories = computed(() => {
   return uniqueCategories.sort();
 });
 
-// Filter books by selected author, category, and favorites
+// Filter books by selected author, category, favorites, and search query
 const filteredBooks = computed(() => {
   let filtered = books.value;
+  
+  // Search by book name
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter(book => 
+      book.name.toLowerCase().includes(query)
+    );
+  }
   
   if (selectedAuthor.value) {
     filtered = filtered.filter(book => book.author === selectedAuthor.value);
@@ -202,6 +211,7 @@ const clearAllFilters = () => {
   selectedAuthor.value = "";
   selectedCategory.value = "";
   showFavoritesOnly.value = false;
+  searchQuery.value = "";
 };
 
 // helper function to build image URL from author + title with caching
@@ -511,7 +521,7 @@ const scrollToTop = () => {
 
 <template>
   <div class="p-6">
-    <h1 class="text-lg font-bold mb-4">📚 Myanmar EPUB Book List</h1>
+    <h1 class="text-lg font-bold mb-4">📚 Myanmar EPUB Books</h1>
 
     <div v-if="loading">Loading books...</div>
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
@@ -519,6 +529,17 @@ const scrollToTop = () => {
     <div v-else>
       <!-- Filters -->
       <div style="margin-bottom: 20px;">
+        <!-- Search Filter -->
+        <div style="margin-bottom: 15px;">
+          <label class="filter-label">Search by Book Name:</label>
+          <input 
+            v-model="searchQuery"
+            type="text"
+            placeholder="Enter book name..."
+            class="search-input"
+          />
+        </div>
+        
         <!-- Author Filter -->
         <div style="margin-bottom: 15px;">
           <label class="filter-label">Filter by Author:</label>
@@ -558,7 +579,7 @@ const scrollToTop = () => {
         </div>
         
         <!-- Clear Filters Button -->
-        <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly" style="margin-bottom: 15px;">
+        <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly || searchQuery.trim()" style="margin-bottom: 15px;">
           <button 
             @click="clearAllFilters"
             class="clear-filters-button">
@@ -727,6 +748,27 @@ body {
   background: white;
   color: #333;
   min-width: 200px;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+  min-width: 300px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.search-input::placeholder {
+  color: #999;
 }
 
 .results-info {
@@ -947,6 +989,22 @@ body {
     background: #333;
     border-color: #5a6268;
     color: #ccc;
+  }
+  
+  /* Dark mode search input */
+  .search-input {
+    background: #2a2a2a;
+    color: #e5e5e5;
+    border-color: #555;
+  }
+  
+  .search-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+  
+  .search-input::placeholder {
+    color: #aaa;
   }
 }
 
