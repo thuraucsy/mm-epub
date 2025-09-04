@@ -529,39 +529,27 @@ const scrollToTop = () => {
     <div v-else>
       <!-- Filters -->
       <div style="margin-bottom: 20px;">
-        <!-- Search Filter -->
-        <div style="margin-bottom: 15px;">
-          <label class="filter-label">Search by Book Name:</label>
-          <input 
-            v-model="searchQuery"
-            type="text"
-            placeholder="Enter book name..."
-            class="search-input"
-          />
-        </div>
         
         <!-- Author Filter -->
         <div style="margin-bottom: 15px;">
-          <label class="filter-label">Filter by Author:</label>
           <select 
             v-model="selectedAuthor" 
             class="filter-select">
-            <option value="">All Authors ({{ books.length }} books)</option>
+            <option value="">စာရေးဆရာအားလုံး ({{ books.length }} အုပ်)</option>
             <option v-for="author in authors" :key="author" :value="author">
-              {{ author }} ({{ books.filter(b => b.author === author).length }} books)
+              {{ author }} ({{ books.filter(b => b.author === author).length }} အုပ်)
             </option>
           </select>
         </div>
         
         <!-- Category Filter -->
         <div style="margin-bottom: 15px;">
-          <label class="filter-label">Filter by Category:</label>
           <select 
             v-model="selectedCategory" 
             class="filter-select">
-            <option value="">All Categories</option>
+            <option value="">စာအုပ်အမျိုးအစားအားလုံး</option>
             <option v-for="category in categories" :key="category" :value="category">
-              {{ category }} ({{ books.filter(b => b.category === category).length }} books)
+              {{ category }} ({{ books.filter(b => b.category === category).length }} အုပ်)
             </option>
           </select>
         </div>
@@ -578,18 +566,28 @@ const scrollToTop = () => {
           </button>
         </div>
         
+        <!-- Search Filter -->
+        <div style="margin-bottom: 15px;">
+          <input 
+            v-model="searchQuery"
+            type="text"
+            placeholder="ရှာချင်သောစာအုပ်အမည်ကိုရိုက်ထည့်ပါ..."
+            class="search-input"
+          />
+        </div>
+        
         <!-- Clear Filters Button -->
         <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly || searchQuery.trim()" style="margin-bottom: 15px;">
           <button 
             @click="clearAllFilters"
             class="clear-filters-button">
-            🗑️ Clear All Filters
+            🗑️ အသစ်ပြန်ရှာမည်
           </button>
         </div>
         
         <!-- Results Info -->
         <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly" class="results-info">
-          Showing {{ filteredBooks.length }} books
+          ရှာဖွေမှုရလဒ် {{ filteredBooks.length }} အုပ်
           <span v-if="selectedAuthor"> by {{ selectedAuthor }}</span>
           <span v-if="selectedCategory"> in {{ selectedCategory }}</span>
           <span v-if="showFavoritesOnly"> from favorites</span>
