@@ -1308,6 +1308,14 @@ body {
     flex: 1;
     max-width: 120px;
   }
+  
+  .epub-nav-button:first-of-type {
+    order: 2;
+  }
+  
+  .epub-nav-button:last-of-type {
+    order: 1;
+  }
 }
 
 /* Back to Top Button Styles */
