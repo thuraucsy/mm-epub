@@ -145,9 +145,10 @@ const closeBookDetail = () => {
   showBookDetail.value = false;
   selectedBook.value = null;
   
-  // Go back in history if we're currently showing a book detail
-  if (window.location.hash.startsWith('#book-')) {
-    window.history.back();
+  // Always clear the hash from URL when closing book detail
+  if (window.location.hash) {
+    // Use replaceState to clear the hash without adding to history
+    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
   }
 };
 
@@ -329,9 +330,10 @@ const closeEpubReader = (skipHistoryBack = false) => {
   // Remove event listeners
   document.removeEventListener('keydown', handleEpubNavigation);
   
-  // Go back in history if we're currently showing EPUB reader and not called from popstate
-  if (!skipHistoryBack && window.location.hash.startsWith('#reading-')) {
-    window.history.back();
+  // Always clear the hash from URL when closing EPUB reader
+  if (window.location.hash) {
+    // Use replaceState to clear the hash without adding to history
+    window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
   }
 };
 
