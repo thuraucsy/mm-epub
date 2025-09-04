@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, nextTick } from "vue";
+import { ref, onMounted, computed, nextTick, watch } from "vue";
 import axios from "axios";
 import ePub from "epubjs";
 
@@ -17,6 +17,90 @@ const currentBook = ref(null);
 const epubBook = ref(null);
 const rendition = ref(null);
 const showBackToTop = ref(false);
+const imageCache = ref(new Map());
+const cachedImageUrls = ref(new Map());
+
+// Image caching functions
+const getCacheKey = (author, filename) => {
+  return `${author}|${filename}`;
+};
+
+const isImageCached = (author, filename) => {
+  const cacheKey = getCacheKey(author, filename);
+  return localStorage.getItem(`img-cache-${cacheKey}`) === 'true';
+};
+
+const markImageAsCached = (author, filename) => {
+  const cacheKey = getCacheKey(author, filename);
+  localStorage.setItem(`img-cache-${cacheKey}`, 'true');
+};
+
+const getCachedImageUrl = (author, filename) => {
+  const cacheKey = getCacheKey(author, filename);
+  return cachedImageUrls.value.get(cacheKey);
+};
+
+const cacheImage = async (author, filename) => {
+  const cacheKey = getCacheKey(author, filename);
+  
+  // Check if already cached in memory
+  if (cachedImageUrls.value.has(cacheKey)) {
+    return cachedImageUrls.value.get(cacheKey);
+  }
+  
+  // Check if marked as cached in localStorage
+  if (isImageCached(author, filename)) {
+    // Image was cached in a previous session, but blob URL is gone
+    // We need to re-download and cache it
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const encodedAuthor = encodeURIComponent(author);
+      const encodedFilename = encodeURIComponent(filename);
+      const imgUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.jpg`;
+      
+      const response = await fetch(imgUrl);
+      if (response.ok) {
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        cachedImageUrls.value.set(cacheKey, blobUrl);
+        return blobUrl;
+      }
+    } catch (error) {
+      console.error('Error re-caching image:', error);
+    }
+  }
+  
+  // Download and cache the image for the first time
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const encodedAuthor = encodeURIComponent(author);
+    const encodedFilename = encodeURIComponent(filename);
+    const imgUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.jpg`;
+    
+    const response = await fetch(imgUrl);
+    if (response.ok) {
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Cache in memory
+      cachedImageUrls.value.set(cacheKey, blobUrl);
+      
+      // Mark as cached in localStorage
+      markImageAsCached(author, filename);
+      
+      console.log(`Image cached for first time: ${author} - ${filename}`);
+      return blobUrl;
+    }
+  } catch (error) {
+    console.error('Error caching image:', error);
+  }
+  
+  // Fallback to original URL if caching fails
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const encodedAuthor = encodeURIComponent(author);
+  const encodedFilename = encodeURIComponent(filename);
+  return `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.jpg`;
+};
 
 onMounted(async () => {
   try {
@@ -117,14 +201,53 @@ const clearAllFilters = () => {
   showFavoritesOnly.value = false;
 };
 
-// helper function to build image URL from author + title
-const getImageUrl = (author, filename) => {
+// helper function to build image URL from author + title with caching
+const getImageUrl = async (author, filename) => {
+  const cacheKey = getCacheKey(author, filename);
+  
+  // Check if already cached in memory
+  if (cachedImageUrls.value.has(cacheKey)) {
+    return cachedImageUrls.value.get(cacheKey);
+  }
+  
+  // Use the caching mechanism
+  return await cacheImage(author, filename);
+};
+
+// Reactive function to get cached image URL for template
+const getCachedImageUrlForTemplate = (author, filename) => {
+  const cacheKey = getCacheKey(author, filename);
+  return cachedImageUrls.value.get(cacheKey) || null;
+};
+
+// Preload images for visible books
+const preloadVisibleImages = async () => {
+  const visibleBooks = filteredBooks.value.slice(0, 20); // Load first 20 books
+  
+  for (const book of visibleBooks) {
+    if (book.isCoverImg) {
+      try {
+        await cacheImage(book.author, book.name);
+      } catch (error) {
+        console.error('Error preloading image:', error);
+      }
+    }
+  }
+};
+
+// Watch for changes in filtered books to preload images
+watch(filteredBooks, () => {
+  nextTick(() => {
+    preloadVisibleImages();
+  });
+}, { immediate: true });
+
+// Function to get fallback image URL
+const getFallbackImageUrl = (author, filename) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   const encodedAuthor = encodeURIComponent(author);
   const encodedFilename = encodeURIComponent(filename);
-  const imgUrl = `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.jpg`;
-  console.log("imgUrl", imgUrl);
-  return imgUrl;
+  return `${baseUrl}/author/${encodedAuthor}/${encodedFilename}.jpg`;
 };
 
 
@@ -458,7 +581,7 @@ const scrollToTop = () => {
           <div class="book-image-container">
             <img
               v-if="book.isCoverImg"
-              :src="getImageUrl(book.author, book.name)"
+              :src="getCachedImageUrlForTemplate(book.author, book.name) || getFallbackImageUrl(book.author, book.name)"
               alt="Book Cover"
               class="book-image"
             />
@@ -486,7 +609,7 @@ const scrollToTop = () => {
             <div class="book-cover-section">
               <img
                 v-if="selectedBook.isCoverImg"
-                :src="getImageUrl(selectedBook.author, selectedBook.name)"
+                :src="getCachedImageUrlForTemplate(selectedBook.author, selectedBook.name) || getFallbackImageUrl(selectedBook.author, selectedBook.name)"
                 alt="Book Cover"
                 class="detail-book-image"
               />
