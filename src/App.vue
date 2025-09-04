@@ -464,7 +464,7 @@ const scrollToTop = () => {
             </div>
             <div v-if="isFavorite(book)" class="favorite-indicator">💖</div>
           </div>
-          <div class="book-title">{{ book.name }}</div>
+          <div class="book-title">{{ filteredBooks.length - index }}. {{ book.name }}</div>
           <div class="book-author">{{ book.author }}</div>
         </div>
       </div>
@@ -684,6 +684,10 @@ body {
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
+.book-image-container {
+  position: relative;
+}
+
 .book-image {
   width: 75px;
   height: 95px;
@@ -693,6 +697,21 @@ body {
   display: block;
   margin-left: auto;
   margin-right: auto;
+}
+
+.favorite-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .book-image-placeholder {
