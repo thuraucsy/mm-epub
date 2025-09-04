@@ -127,6 +127,7 @@ const getImageUrl = (author, filename) => {
   return imgUrl;
 };
 
+
 // Show book detail modal
 const showBookDetails = (book) => {
   selectedBook.value = book;
@@ -516,7 +517,9 @@ const scrollToTop = () => {
               
               <div class="book-actions">
                 <button class="action-button primary" @click="openEpubReader(selectedBook)">📖 Read Book</button>
-                <button class="action-button secondary" @click="downloadBook(selectedBook)">💾 Download</button>
+                <button class="action-button secondary" @click="downloadBook(selectedBook)">
+                  💾 Download<span v-if="selectedBook.size"> ({{ selectedBook.size }})</span>
+                </button>
                 <button 
                   class="action-button secondary" 
                   @click="toggleFavorite(selectedBook)"
@@ -1036,6 +1039,7 @@ body {
   background: #ffd3d3;
   border-color: #e55656;
 }
+
 
 /* Dark mode modal styles */
 @media (prefers-color-scheme: dark) {
