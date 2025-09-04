@@ -512,15 +512,6 @@ const scrollToTop = () => {
                 </div>
               </div>
               
-              <div class="book-description">
-                <h3>Description</h3>
-                <p v-if="selectedBook.description">{{ selectedBook.description }}</p>
-                <p v-else-if="selectedBook.summary">{{ selectedBook.summary }}</p>
-                <p v-else class="no-description">
-                  Description မရှိပါ။
-                </p>
-              </div>
-              
               <div class="book-actions">
                 <button class="action-button primary" @click="openEpubReader(selectedBook)">📖 Read Book</button>
                 <button class="action-button secondary" @click="downloadBook(selectedBook)">💾 Download</button>
@@ -531,6 +522,15 @@ const scrollToTop = () => {
                   {{ isFavorite(selectedBook) ? '💖' : '❤️' }} 
                   {{ isFavorite(selectedBook) ? 'Remove from Favorites' : 'Add to Favorites' }}
                 </button>
+              </div>
+              
+              <div class="book-description">
+                <h3>Description</h3>
+                <p v-if="selectedBook.description">{{ selectedBook.description }}</p>
+                <p v-else-if="selectedBook.summary">{{ selectedBook.summary }}</p>
+                <p v-else class="no-description">
+                  Description မရှိပါ။
+                </p>
               </div>
             </div>
           </div>
