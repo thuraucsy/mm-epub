@@ -110,6 +110,13 @@ const toggleFavoritesFilter = () => {
   showFavoritesOnly.value = !showFavoritesOnly.value;
 };
 
+// Clear all filters
+const clearAllFilters = () => {
+  selectedAuthor.value = "";
+  selectedCategory.value = "";
+  showFavoritesOnly.value = false;
+};
+
 // helper function to build image URL from author + title
 const getImageUrl = (author, filename) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -421,6 +428,15 @@ const scrollToTop = () => {
           </button>
         </div>
         
+        <!-- Clear Filters Button -->
+        <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly" style="margin-bottom: 15px;">
+          <button 
+            @click="clearAllFilters"
+            class="clear-filters-button">
+            🗑️ Clear All Filters
+          </button>
+        </div>
+        
         <!-- Results Info -->
         <div v-if="selectedAuthor || selectedCategory || showFavoritesOnly" class="results-info">
           Showing {{ filteredBooks.length }} books
@@ -622,6 +638,30 @@ body {
   opacity: 0.8;
 }
 
+/* Clear filters button styles */
+.clear-filters-button {
+  padding: 8px 14px;
+  border: 1px solid #6c757d;
+  border-radius: 6px;
+  background: white;
+  color: #6c757d;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clear-filters-button:hover {
+  background: #f8f9fa;
+  border-color: #5a6268;
+  color: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
+}
+
 /* Book card styles */
 .book-card {
   display: inline-block;
@@ -726,6 +766,19 @@ body {
   
   .favorites-filter-button.favorites-active:hover {
     background: #e55656;
+  }
+  
+  /* Dark mode clear filters button */
+  .clear-filters-button {
+    background: #2a2a2a;
+    border-color: #6c757d;
+    color: #aaa;
+  }
+  
+  .clear-filters-button:hover {
+    background: #333;
+    border-color: #5a6268;
+    color: #ccc;
   }
 }
 
