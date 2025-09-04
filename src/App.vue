@@ -382,7 +382,7 @@ const scrollToTop = () => {
 
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">📚 Myanmar EPUB Book List</h1>
+    <h1 class="text-lg font-bold mb-4">📚 Myanmar EPUB Book List</h1>
 
     <div v-if="loading">Loading books...</div>
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
@@ -459,6 +459,9 @@ const scrollToTop = () => {
               alt="Book Cover"
               class="book-image"
             />
+            <div v-else class="book-image-placeholder">
+              📚
+            </div>
             <div v-if="isFavorite(book)" class="favorite-indicator">💖</div>
           </div>
           <div class="book-title">{{ book.name }}</div>
@@ -692,6 +695,21 @@ body {
   margin-right: auto;
 }
 
+.book-image-placeholder {
+  width: 75px;
+  height: 95px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .book-title {
   font-size: 9px;
   font-weight: bold;
@@ -874,7 +892,7 @@ body {
 .no-cover-placeholder {
   width: 200px;
   height: 280px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -967,13 +985,13 @@ body {
 }
 
 .action-button.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
 }
 
 .action-button.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .action-button.secondary {
@@ -1182,7 +1200,7 @@ body {
 
 .epub-nav-button {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -1194,7 +1212,7 @@ body {
 
 .epub-nav-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .epub-nav-button:disabled {
@@ -1299,14 +1317,14 @@ body {
   right: 30px;
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   border-radius: 50%;
   font-size: 20px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
   transition: all 0.3s ease;
   z-index: 1500;
   display: flex;
@@ -1316,8 +1334,8 @@ body {
 
 .back-to-top-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 .back-to-top-button:active {
