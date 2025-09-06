@@ -642,6 +642,7 @@ const scrollToTop = () => {
             
             <!-- Book Information -->
             <div class="book-info-section">
+              <div class="book-number">Book #{{ books.length - books.findIndex(b => b === selectedBook) }}</div>
               <h2 class="detail-book-title">{{ selectedBook.name || selectedBook.title }}</h2>
               <p class="detail-book-author">by {{ selectedBook.author }}</p>
               
@@ -1114,6 +1115,19 @@ body {
   min-width: 300px;
 }
 
+.book-number {
+  display: inline-block;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .detail-book-title {
   font-size: 28px;
   font-weight: bold;
@@ -1243,6 +1257,10 @@ body {
   
   .detail-book-author {
     color: #aaa;
+  }
+  
+  .book-number {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
   }
   
   .book-metadata {
