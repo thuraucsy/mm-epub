@@ -21,6 +21,12 @@ const showBackToTop = ref(false);
 const imageCache = ref(new Map());
 const cachedImageUrls = ref(new Map());
 
+// EPUB navigation state
+const currentLocation = ref(null);
+const totalPages = ref(0);
+const currentPage = ref(1);
+const isSliderDragging = ref(false);
+
 // Image caching functions
 const getCacheKey = (author, filename) => {
   return `${author}|${filename}`;
@@ -410,6 +416,11 @@ const openEpubReader = async (book) => {
     currentBook.value = book;
     showEpubReader.value = true;
     
+    // Reset navigation state
+    currentLocation.value = null;
+    totalPages.value = 0;
+    currentPage.value = 1;
+    
     // Close book detail modal
     showBookDetail.value = false;
     
@@ -432,6 +443,15 @@ const openEpubReader = async (book) => {
     // Initialize EPUB.js
     epubBook.value = ePub(epubUrl);
     
+    // Set up book ready handler
+    epubBook.value.ready.then(() => {
+      // Get total locations for pagination
+      return epubBook.value.locations.generate(1024);
+    }).then((locations) => {
+      totalPages.value = locations.length;
+      console.log('Total pages:', totalPages.value);
+    });
+    
     // Render the book
     const viewerElement = document.getElementById('epub-viewer');
     if (viewerElement) {
@@ -439,6 +459,27 @@ const openEpubReader = async (book) => {
         width: '100%',
         height: '100%',
         spread: 'none'
+      });
+      
+      // Set up location change handler
+      rendition.value.on('locationChanged', (location) => {
+        currentLocation.value = location;
+        if (epubBook.value.locations && location.start) {
+          const locationIndex = epubBook.value.locations.locationFromCfi(location.start.cfi);
+          const newPage = locationIndex + 1;
+          // Always update page number, but add a small delay if slider was dragging
+          if (isSliderDragging.value) {
+            // If slider is being dragged, wait a bit before updating
+            setTimeout(() => {
+              if (!isSliderDragging.value) {
+                currentPage.value = Math.max(1, Math.min(newPage, totalPages.value));
+              }
+            }, 150);
+          } else {
+            // Update immediately if not dragging
+            currentPage.value = Math.max(1, Math.min(newPage, totalPages.value));
+          }
+        }
       });
       
       // Display the book
@@ -468,6 +509,12 @@ const closeEpubReader = (skipHistoryBack = false) => {
   showEpubReader.value = false;
   currentBook.value = null;
   
+  // Reset navigation state
+  currentLocation.value = null;
+  totalPages.value = 0;
+  currentPage.value = 1;
+  isSliderDragging.value = false;
+  
   // Clean up EPUB.js instances
   if (rendition.value) {
     rendition.value.destroy();
@@ -495,11 +542,11 @@ const handleEpubNavigation = (event) => {
   switch (event.key) {
     case 'ArrowLeft':
       event.preventDefault();
-      rendition.value.prev();
+      goToPrevPage();
       break;
     case 'ArrowRight':
       event.preventDefault();
-      rendition.value.next();
+      goToNextPage();
       break;
     case 'Escape':
       event.preventDefault();
@@ -510,14 +557,65 @@ const handleEpubNavigation = (event) => {
 
 const goToPrevPage = () => {
   if (rendition.value) {
+    // Ensure slider is not dragging to allow page number updates
+    isSliderDragging.value = false;
+    
+    // Update page number immediately for responsive UI
+    const newPage = Math.max(1, currentPage.value - 1);
+    currentPage.value = newPage;
+    
+    // Navigate to previous page
     rendition.value.prev();
   }
 };
 
 const goToNextPage = () => {
   if (rendition.value) {
+    // Ensure slider is not dragging to allow page number updates
+    isSliderDragging.value = false;
+    
+    // Update page number immediately for responsive UI
+    const newPage = Math.min(totalPages.value, currentPage.value + 1);
+    currentPage.value = newPage;
+    
+    // Navigate to next page
     rendition.value.next();
   }
+};
+
+// Slider navigation functions
+const goToPage = (pageNumber) => {
+  if (!epubBook.value || !epubBook.value.locations || !rendition.value) return;
+  
+  const targetPage = Math.max(1, Math.min(pageNumber, totalPages.value));
+  const locationIndex = targetPage - 1;
+  
+  if (locationIndex >= 0 && locationIndex < epubBook.value.locations.length()) {
+    const cfi = epubBook.value.locations.cfiFromLocation(locationIndex);
+    rendition.value.display(cfi);
+  }
+};
+
+const onSliderInput = (event) => {
+  if (!isSliderDragging.value) return;
+  const pageNumber = parseInt(event.target.value);
+  // Update current page immediately for responsive UI
+  currentPage.value = pageNumber;
+  goToPage(pageNumber);
+};
+
+const onSliderStart = () => {
+  isSliderDragging.value = true;
+};
+
+const onSliderEnd = (event) => {
+  const pageNumber = parseInt(event.target.value);
+  currentPage.value = pageNumber;
+  goToPage(pageNumber);
+  // Small delay before allowing location updates to prevent conflicts
+  setTimeout(() => {
+    isSliderDragging.value = false;
+  }, 200);
 };
 
 // Back to top functionality
@@ -731,9 +829,30 @@ const scrollToTop = () => {
         <!-- Reader Controls -->
         <div class="epub-reader-controls">
           <button class="epub-nav-button" @click="goToPrevPage">← Previous</button>
-          <div class="epub-controls-info">
+          
+          <!-- Page Navigation Slider -->
+          <div class="epub-slider-container" v-if="totalPages > 0">
+            <div class="epub-page-info">
+              Page {{ currentPage }} of {{ totalPages }}
+            </div>
+            <input
+              type="range"
+              :min="1"
+              :max="totalPages"
+              :value="currentPage"
+              @input="onSliderInput"
+              @mousedown="onSliderStart"
+              @mouseup="onSliderEnd"
+              @touchstart="onSliderStart"
+              @touchend="onSliderEnd"
+              class="epub-slider"
+            />
+          </div>
+          
+          <div class="epub-controls-info" v-else>
             Use arrow keys to navigate • Press ESC to close
           </div>
+          
           <button class="epub-nav-button" @click="goToNextPage">Next →</button>
         </div>
       </div>
@@ -1515,6 +1634,81 @@ body {
   margin: 0 20px;
 }
 
+/* EPUB Slider Styles */
+.epub-slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  margin: 0 20px;
+  gap: 8px;
+}
+
+.epub-page-info {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.epub-slider {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e5e5;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.epub-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+}
+
+.epub-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.4);
+}
+
+.epub-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+}
+
+.epub-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.4);
+}
+
+.epub-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e5e5;
+  border: none;
+}
+
+.epub-slider:focus {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
 /* Dark mode EPUB reader styles */
 @media (prefers-color-scheme: dark) {
   .epub-reader-container {
@@ -1549,6 +1743,41 @@ body {
   
   .epub-controls-info {
     color: #aaa;
+  }
+  
+  /* Dark mode slider styles */
+  .epub-page-info {
+    color: #aaa;
+  }
+  
+  .epub-slider {
+    background: #444;
+  }
+  
+  .epub-slider::-webkit-slider-thumb {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  
+  .epub-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+  }
+  
+  .epub-slider::-moz-range-thumb {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  
+  .epub-slider::-moz-range-thumb:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+  }
+  
+  .epub-slider::-moz-range-track {
+    background: #444;
+  }
+  
+  .epub-slider:focus {
+    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.3);
   }
 }
 
@@ -1600,6 +1829,21 @@ body {
   
   .epub-nav-button:last-of-type {
     order: 1;
+  }
+  
+  /* Mobile responsive slider styles */
+  .epub-slider-container {
+    margin: 0;
+    order: 0;
+    width: 100%;
+  }
+  
+  .epub-slider {
+    max-width: 100%;
+  }
+  
+  .epub-page-info {
+    font-size: 11px;
   }
 }
 
