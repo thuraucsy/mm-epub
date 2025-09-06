@@ -191,7 +191,12 @@ const filteredBooks = computed(() => {
   }
   
   if (showFavoritesOnly.value) {
-    filtered = filtered.filter(book => isFavorite(book));
+    // Get favorite books in favorites.value order (descending)
+    filtered = favorites.value
+      .slice() // copy array
+      .reverse() // descending order
+      .map(key => books.value.find(book => getFavoriteKey(book) === key))
+      .filter(Boolean); // remove not found
   }
   
   return filtered;
