@@ -449,6 +449,16 @@ const openEpubReader = async (book) => {
   }
 };
 
+const clearAllFavorites = () => {
+  if (favorites.value.length === 0) return;
+  
+  // Ask for confirmation before clearing all favorites
+  if (confirm(`Are you sure you want to remove all ${favorites.value.length} favorites? This action cannot be undone.`)) {
+    favorites.value = [];
+    saveFavorites();
+  }
+};
+
 const closeEpubReader = (skipHistoryBack = false) => {
   showEpubReader.value = false;
   currentBook.value = null;
@@ -555,14 +565,21 @@ const scrollToTop = () => {
         </div>
         
         <!-- Favorites Filter -->
-        <div style="margin-bottom: 15px;">
+        <div style="margin-bottom: 15px;" v-if="favoriteCount > 0">
           <button 
             @click="toggleFavoritesFilter"
             class="favorites-filter-button"
             :class="{ 'favorites-active': showFavoritesOnly }">
-            {{ showFavoritesOnly ? '💖' : '❤️' }} 
+            {{ showFavoritesOnly ? '💖' : '❤️' }}  
             {{ showFavoritesOnly ? 'Show All Books' : 'Show Favorites Only' }}
             <span v-if="favoriteCount > 0">({{ favoriteCount }})</span>
+          </button>
+          
+          <button 
+            v-if="showFavoritesOnly"
+            @click="clearAllFavorites"
+            class="clear-favorites-button">
+            🗑️
           </button>
         </div>
         
@@ -837,6 +854,31 @@ body {
   box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);
 }
 
+/* Clear favorites button styles */
+.clear-favorites-button {
+  padding: 8px 14px;
+  border: 1px solid #dc3545;
+  border-radius: 6px;
+  background: white;
+  color: #dc3545;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.clear-favorites-button:hover {
+  background: #f8d7da;
+  border-color: #c82333;
+  color: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
 /* Book card styles */
 .book-card {
   display: inline-block;
@@ -1004,6 +1046,19 @@ body {
   
   .search-input::placeholder {
     color: #aaa;
+  }
+  
+  /* Dark mode clear favorites button */
+  .clear-favorites-button {
+    background: #2a2a2a;
+    border-color: #dc3545;
+    color: #dc3545;
+  }
+  
+  .clear-favorites-button:hover {
+    background: #333;
+    border-color: #c82333;
+    color: #c82333;
   }
 }
 
